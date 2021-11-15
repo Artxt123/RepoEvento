@@ -4,11 +4,12 @@ namespace Evento.Core.Domain
 {
     public class User : Entity
     {
-        public string Role { get; private set; }
-        public string Name { get; private set; }
-        public string Email { get; private set; }
-        public string Password { get; private set; }
-        public DateTime CreatedAt { get; private set; }
+        public string Role { get; protected set; }
+        public string Name { get; protected set; }
+        public string Email { get; protected set; }
+        public string Password { get; protected set; }
+        public DateTime CreatedAt { get; protected set; }
+        
 
         protected User()
         {
