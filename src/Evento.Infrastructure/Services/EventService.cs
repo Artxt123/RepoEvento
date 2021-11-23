@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using Evento.Core.Domain;
 using Evento.Core.Repositories;
 using Evento.Infrastructure.DTO;
+using Evento.Infrastructure.Extensions;
 
 namespace Evento.Infrastructure.Services
 {
@@ -19,18 +21,18 @@ namespace Evento.Infrastructure.Services
             _mapper = mapper;
         }
 
-        public async Task<EventDto> GetAsync(Guid id)
+        public async Task<EventDetailsDto> GetAsync(Guid id)
         {
             var @event = await _eventRepository.GetAsync(id);
 
-            return _mapper.Map<EventDto>(@event);
+            return _mapper.Map<EventDetailsDto>(@event);
         }
 
-        public async Task<EventDto> GetAsync(string name)
+        public async Task<EventDetailsDto> GetAsync(string name)
         {
             var @event = await _eventRepository.GetAsync(name);
 
-            return _mapper.Map<EventDto>(@event);
+            return _mapper.Map<EventDetailsDto>(@event);
         }
 
         public async Task<IEnumerable<EventDto>> BrowseAsync(string name = null)
@@ -42,21 +44,39 @@ namespace Evento.Infrastructure.Services
 
         public async Task CreateAsync(Guid id, string name, string description, DateTime startDate, DateTime endDate)
         {
-            throw new NotImplementedException();
+            var @event = await _eventRepository.GetOrFailAsync(name);
+            // if (@event != null)
+            // {
+            //     throw new Exception($"Event named: '{name}' is already exists.");
+            // }
+            @event = new Event(id, name, description, startDate, endDate);
+            await _eventRepository.AddAsync(@event);
         }
         public async Task AddTicketsAsync(Guid eventId, int amount, decimal price)
         {
-            throw new NotImplementedException();
+            var @event = await _eventRepository.GetOrFailAsync(eventId);
+            @event.AddTickets(amount, price);
+            await _eventRepository.UpdateAsync(@event); //teraz metoda UpdateAync nic nie robi, ale w przyszłości może np. wydać polecenie SQL do zaktualizowania bazy danych
         }
 
         public async Task UpdateAsync(Guid id, string name, string description)
-        {
-            throw new NotImplementedException();
+        {                        
+            var @event = await _eventRepository.GetOrFailAsync(name);
+            // if (@event != null)
+            // {
+            //     throw new Exception($"Event named: '{name}' is already exists.");
+            // }
+            @event = await _eventRepository.GetOrFailAsync(id);
+
+            @event.SetName(name);
+            @event.SetDescription(description);
+            await _eventRepository.UpdateAsync(@event);
         }
 
         public async Task DeleteAsync(Guid id)
         {
-            throw new NotImplementedException();
+            var @event = await _eventRepository.GetOrFailAsync(id);
+            await _eventRepository.DeleteAsync(@event);
         }
     }
 }

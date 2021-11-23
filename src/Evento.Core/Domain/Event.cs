@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Evento.Core.Domain
 {
@@ -15,6 +16,11 @@ namespace Evento.Core.Domain
 
         public DateTime UpdatedAt { get; protected set; }
         public IEnumerable<Ticket> Tickets => _tickets;
+        public IEnumerable<Ticket> PurchasedTickets => Tickets.Where(t => t.Purchased);
+        public IEnumerable<Ticket> AvailableTickets => Tickets.Except(PurchasedTickets);
+                                       // The same as: Tickets.Where(t => !t.Purchased);
+
+
 
         protected Event()
         {
@@ -23,11 +29,31 @@ namespace Evento.Core.Domain
         public Event(Guid id, string name, string description, DateTime startDate, DateTime endDate)
         {
             Id = id;
-            Name = name;
-            Description = description;
+            SetName(name);
+            SetDescription(description);
             StartDate = startDate;
             EndDate = endDate;
             CreatedAt = DateTime.UtcNow;
+            UpdatedAt = DateTime.UtcNow;
+        }
+
+        public void SetName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new Exception($"Event with id: '{Id}' cannot have an empty name.");
+            }
+            Name = name;
+            UpdatedAt = DateTime.UtcNow;
+        }
+
+        public void SetDescription(string description)
+        {
+            if (string.IsNullOrWhiteSpace(description))
+            {
+                throw new Exception($"Event with id: '{Id}' cannot have an empty description.");
+            }
+            Description = description;
             UpdatedAt = DateTime.UtcNow;
         }
 

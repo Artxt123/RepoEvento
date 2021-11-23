@@ -13,6 +13,8 @@ namespace Evento.Infrastructure.Mappers
             {
                 cfg.CreateMap<Event, EventDto>()
                    .ForMember(x => x.TicketsCount, m => m.MapFrom(p => p.Tickets.Count()));
+                cfg.CreateMap<Event, EventDetailsDto>();
+                cfg.CreateMap<Ticket,TicketDto>();
             })
             .CreateMapper();
     }
