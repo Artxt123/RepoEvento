@@ -15,6 +15,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Evento.Infrastructure.Settings;
 
 namespace Evento.Api
 {
@@ -41,7 +45,27 @@ namespace Evento.Api
             services.AddScoped<IEventRepository, EventRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IEventService, EventService>();
+            services.AddScoped<IUserService, UserService>();
             services.AddSingleton(AutoMapperConfig.Initialize());
+            //Zmapowanie danych z "jwt" na klasę JwtSettings
+            services.Configure<JwtSettings>(Configuration.GetSection("jwt"));
+
+            var jwtSettings = new JwtSettings();
+            Configuration.GetSection("jwt").Bind(jwtSettings);
+
+            services.AddAuthentication(options => 
+            {
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidIssuer = jwtSettings.Issuer,
+                    ValidateAudience = false,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
+                };
+            // https://github.com/aspnet/Security/issues/1310
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -53,6 +77,7 @@ namespace Evento.Api
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Evento.Api v1"));
             }
+            //app.UseAuthentication(); 25.11.2021 (5.4)
 
             app.UseHttpsRedirection();
 
