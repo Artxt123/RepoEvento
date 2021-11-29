@@ -42,11 +42,13 @@ namespace Evento.Api
             });
             services.AddMvc()
                     .AddJsonOptions(options => options.JsonSerializerOptions.WriteIndented = true);
+            services.AddAuthorization(x => x.AddPolicy("HasAdminRole", p => p.RequireRole("admin")));
             services.AddScoped<IEventRepository, EventRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IEventService, EventService>();
             services.AddScoped<IUserService, UserService>();
             services.AddSingleton(AutoMapperConfig.Initialize());
+            services.AddSingleton<IJwtHandler, JwtHandler>();
             //Zmapowanie danych z "jwt" na klasę JwtSettings
             services.Configure<JwtSettings>(Configuration.GetSection("jwt"));
 
@@ -77,7 +79,7 @@ namespace Evento.Api
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Evento.Api v1"));
             }
-            //app.UseAuthentication(); 25.11.2021 (5.4)
+            app.UseAuthentication(); //25.11.2021 (5.4)
 
             app.UseHttpsRedirection();
 
