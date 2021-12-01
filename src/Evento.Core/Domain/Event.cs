@@ -67,6 +67,46 @@ namespace Evento.Core.Domain
             }
         }
 
+        public void PurchaseTickets(User user, int amount)
+        {
+            if (user == null)
+            {
+                throw new Exception($"That user is does not exist.");
+            }
+            if (AvailableTickets.Count() < amount)
+            {
+                throw new Exception($"Not enough available tickets to purchase ({amount}) by user: '{user.Name}'");
+            }
 
+            var tickets = AvailableTickets.Take(amount);
+            foreach (var ticket in tickets)
+            {
+                ticket.Purchase(user);
+            }
+        }
+
+        public void CancelPurchasedTickets(User user, int amount)
+        {
+            var tickets = GetTicketsPurchasedByUser(user);
+            if (tickets.Count() < amount)
+            {
+                throw new Exception($"Not enough purchased tickets to be canceled ({amount}) by user: '{user.Name}'");
+            }
+
+            foreach (var ticket in tickets.Take(amount))
+            {
+                ticket.Cancel();
+            }
+        }
+
+        public IEnumerable<Ticket> GetTicketsPurchasedByUser(User user)
+        {
+            if (user == null)
+            {
+                throw new Exception($"That user is does not exist.");
+            }
+
+            return PurchasedTickets.Where(x => x.UserId == user.Id);
+        } 
     }
 }
