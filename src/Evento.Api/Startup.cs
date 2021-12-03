@@ -19,6 +19,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Evento.Infrastructure.Settings;
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
 
 namespace Evento.Api
 {
@@ -42,8 +44,9 @@ namespace Evento.Api
             });
             services.AddMvc()
                     .AddJsonOptions(options => options.JsonSerializerOptions.WriteIndented = true);
+            services.AddMemoryCache();
             services.AddAuthorization(x => x.AddPolicy("HasAdminRole", p => p.RequireRole("admin")));
-            services.AddScoped<IEventRepository, EventRepository>();
+           // services.AddScoped<IEventRepository, EventRepository>(); - for test it would be used with Autofac below (line 81)
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IEventService, EventService>();
             services.AddScoped<IUserService, UserService>();
@@ -69,6 +72,18 @@ namespace Evento.Api
                 };
             // https://github.com/aspnet/Security/issues/1310
             });
+
+        }
+
+        public void ConfigureContainer(ContainerBuilder builder)
+        {
+            //TEST WITH OWN IoC - Autofac
+            builder.RegisterType<EventRepository>().As<IEventRepository>().InstancePerLifetimeScope();
+            
+            // Scan an assembly for components
+            //builder.RegisterAssemblyTypes(typeof(Startup).Assembly)
+            //       .Where(t => t.Name.EndsWith("Service"))
+            //       .AsImplementedInterfaces();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

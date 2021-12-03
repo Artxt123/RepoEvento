@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Autofac.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -20,7 +22,7 @@ namespace Evento.Api
             try
             {
                 logger.Debug("init main");
-                CreateHostBuilder(args).Build().Run();
+                CreateHostBuilder(args).Build().Run();              
             }
             catch (Exception exception)
             {
@@ -37,6 +39,7 @@ namespace Evento.Api
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                // DEFAULT LOGGING IN CONSOLE
                 // .ConfigureLogging((context, logging) =>
                 // {
                 //     logging.ClearProviders();
@@ -44,6 +47,7 @@ namespace Evento.Api
                 //     //logging.AddDebug();
                 //     logging.AddConsole();
                 // })
+                .UseServiceProviderFactory(new AutofacServiceProviderFactory())
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();

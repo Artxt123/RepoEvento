@@ -1,9 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Evento.Infrastructure.Commands.Events;
+using Evento.Infrastructure.DTO;
 using Evento.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 
 namespace Evento.Api.Controllers
 {
@@ -11,17 +15,33 @@ namespace Evento.Api.Controllers
     public class EventsController : ApiControllerBase
     {
         private readonly IEventService _eventService;
+        private readonly IMemoryCache _cache;
+        private readonly ILogger _logger;
 
-        public EventsController(IEventService eventService)
+        public EventsController(IEventService eventService, IMemoryCache cache, ILogger<EventsController> logger)
         {
             _eventService = eventService;
+            _cache = cache;
+            _logger = logger;
         }
 
         [HttpGet]
-       // [AllowAnonymous]
+       //[AllowAnonymous]
         public async Task<IActionResult> Get(string name)
         {
-            var events = await _eventService.BrowseAsync(name);
+            var events = _cache.Get<IEnumerable<EventDto>>("events"); //key like in Dictionary
+            if (events == null)
+            {
+                //Console.WriteLine("Fetching from service.");
+                _logger.LogTrace("Fetching events from service");
+                events = await _eventService.BrowseAsync(name);
+                _cache.Set("events", events, TimeSpan.FromMinutes(1)); //key; value; how long data will be in cache
+            }
+            else
+            {
+                //Console.WriteLine("Fetching from cache.");
+                _logger.LogTrace("Fetching events from cache");
+            }
 
             return Json(events);
         }
