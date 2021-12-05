@@ -16,7 +16,7 @@ namespace Evento.Api.Controllers
     {
         private readonly IEventService _eventService;
         private readonly IMemoryCache _cache;
-        private readonly ILogger _logger;
+        private readonly ILogger<EventsController> _logger;
 
         public EventsController(IEventService eventService, IMemoryCache cache, ILogger<EventsController> logger)
         {
@@ -29,6 +29,8 @@ namespace Evento.Api.Controllers
        //[AllowAnonymous]
         public async Task<IActionResult> Get(string name)
         {
+            //throw new ArgumentException("It's only for test my own ErrorHandler...");
+
             var events = _cache.Get<IEnumerable<EventDto>>("events"); //key like in Dictionary
             if (events == null)
             {

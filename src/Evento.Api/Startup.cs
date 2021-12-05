@@ -21,6 +21,8 @@ using System.Text;
 using Evento.Infrastructure.Settings;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using Evento.Api.Framework;
 
 namespace Evento.Api
 {
@@ -46,15 +48,17 @@ namespace Evento.Api
                     .AddJsonOptions(options => options.JsonSerializerOptions.WriteIndented = true);
             services.AddMemoryCache();
             services.AddAuthorization(x => x.AddPolicy("HasAdminRole", p => p.RequireRole("admin")));
-           // services.AddScoped<IEventRepository, EventRepository>(); - for test it would be used with Autofac below (line 81)
+           // services.AddScoped<IEventRepository, EventRepository>(); it's been commented for test, it would be used with Autofac in ConfigureContainer (below)
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IEventService, EventService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<ITicketService, TicketService>();
+            services.AddScoped<IDataInitializer, DataInitializer>();
             services.AddSingleton(AutoMapperConfig.Initialize());
             services.AddSingleton<IJwtHandler, JwtHandler>();
             //Zmapowanie danych z "jwt" na klasę JwtSettings
             services.Configure<JwtSettings>(Configuration.GetSection("jwt"));
+            services.Configure<AppSettings>(Configuration.GetSection("app"));
 
             var jwtSettings = new JwtSettings();
             Configuration.GetSection("jwt").Bind(jwtSettings);
@@ -72,7 +76,6 @@ namespace Evento.Api
                 };
             // https://github.com/aspnet/Security/issues/1310
             });
-
         }
 
         public void ConfigureContainer(ContainerBuilder builder)
@@ -86,12 +89,15 @@ namespace Evento.Api
             //       .AsImplementedInterfaces();
         }
 
+
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
-                app.UseDeveloperExceptionPage();
+                //app.UseDeveloperExceptionPage();
+                //INSTEAD OF UseDeveloperExceptionPage() I USE MY OWN EXCEPTION HANDLER:
+                app.UseErrorHandler();
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Evento.Api v1"));
             }
@@ -107,6 +113,19 @@ namespace Evento.Api
             {
                 endpoints.MapControllers();
             });
+            
+            SeedData(app);
+
         }
+       private void SeedData(IApplicationBuilder app)
+        {
+            var settings = app.ApplicationServices.GetService<IOptions<AppSettings>>();
+            if (settings.Value.SeedData)
+            {
+                var dataInitializer = app.ApplicationServices.GetService<IDataInitializer>();
+                dataInitializer.SeedAsync();
+            }
+        }
+       
     }
 }
